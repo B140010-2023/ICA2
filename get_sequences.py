@@ -2,6 +2,7 @@
 #importing necessary modules
 import requests
 import subprocess
+import sys
 
 #Creating a def containing the URLs necessary to get the sequence data in json format this code is edited from the
 #ENSEMBL REST API code found on https://rest.ensembl.org/, I wasn't sure how to do it without biopython but this worked!
@@ -25,10 +26,13 @@ def get_sequences(waddyawant):
                     return sequences.text.split(">")[1:]
                 else:
                     print(f"Failed to fetch sequences. Status code: {sequences.status_code}")
+                    sys.exit()
             else:
-                print("No sequences found.")
+                print("No sequences found. Ensure that entries are spelt correctly and try again.")
+                sys.exit()
         else:
             print(f"Failed to fetch IDs. Status code: {jasons.status_code}")
+            sys.exit()
     except Exception as e:
         print("Error:", e)
 
@@ -44,24 +48,32 @@ fetched_sequences = get_sequences(waddyawant)
 if fetched_sequences:
     print(f"{len(fetched_sequences)} sequences retrieved") #prints how many sequences were retrieved
     output_filename = f"{protein}_{species}_sequences.fasta" #outputs the sequences into a named fasta output file
-    with open(output_filename, "w") as file: #I didn't realise it needed a > to perform clustalo so I added the > back on :)
+    with open(output_filename, "w") as file: #I didn't realise it needed a > to perform clustalo so I added the > on :)
         for seq in fetched_sequences:
             if not seq.startswith('>'):
                 seq = '>' + seq
             file.write(seq)
-
+print("Fasta file created, now performing clustalo")
 #this next chunk of code will ask the user whether they want to continue with conservation analysis of their chosen protein family
-clustal = input("Would you like to analyse conservation in your chosen sequences? y/n: ")
-if clustal == "y":
-    try:
-        clustalo = subprocess.run('clustalo -i *.fasta -o clustalo.output', shell = True)
-        winsize = input("What is your desired winsize for plotting using plotcon? Enter intiger: ")
-        png_maker = subprocess.run(f'plotcon -sequence clustalo.output -graph png -winsize {winsize}')
-    except Exception as e:
-        print("Error:", e)
-elif clustl == "n":
-    print("Programme terminated, exiting...")
-    sys.exit()
-else:
-    print("Input not recognised. exiting...")
-    sys.exit()
+try:
+    clustalo = subprocess.run('clustalo -i *.fasta -o clustalo.output', shell = True)
+    winsize = input("What is your desired winsize for plotting using plotcon? Enter integer: ")
+    png_maker = subprocess.run(f'plotcon -sequence clustalo.output -graph png -winsize {winsize}', shell=True)
+except Exception as e:
+    print("Error:", e)
+print("PNG displaying conservation created") #maybe try and code in a way to view the png then and there
+
+#here I use cons to create the consensus sequence, this offers the option to print to screen after running, otherwise the file is
+#found within a file called consensus.fasta
+try:
+    cons = subprocess.run('cons -sequence clustalo.output -outseq consensus.fasta', shell = True)
+    print("Consensus.fasta created")
+    show_seq = input("Would you like to view the sequence y/n: ")
+    if show_seq == 'y':
+    	with open ('consensus.fasta', 'r') as file:
+	        consensus_seq = file.read()
+	        print(consensus_seq)
+    else:
+    	print("Find consensus sequence in consensus.fasta")
+except Exception as e:
+    print("Error:", e)
