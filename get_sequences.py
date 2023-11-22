@@ -28,7 +28,7 @@ def get_sequences(waddyawant):
                     print(f"Failed to fetch sequences. Status code: {sequences.status_code}")
                     sys.exit()
             else:
-                print("No sequences found. Ensure that entries are spelt correctly and try again.")
+                print("No sequences found. Ensure that entries are spelt correctly and please try again.")
                 sys.exit()
         else:
             print(f"Failed to fetch IDs. Status code: {jasons.status_code}")
@@ -61,7 +61,7 @@ try:
     png_maker = subprocess.run(f'plotcon -sequence clustalo.output -graph png -winsize {winsize}', shell=True)
 except Exception as e:
     print("Error:", e)
-print("PNG displaying conservation created") #maybe try and code in a way to view the png then and there
+print("PNG displaying conservation created")
 
 #here I use cons to create the consensus sequence, this offers the option to print to screen after running, otherwise the file is
 #found within a file called consensus.fasta
@@ -75,5 +75,20 @@ try:
 	        print(consensus_seq)
     else:
     	print("Find consensus sequence in consensus.fasta")
+except Exception as e:
+    print("Error:", e)
+
+#this next bit of code offers the user the option to blast the consensus sequence against a sequence from the NCBI database of
+#their choosing
+try:
+    wanna_blast = input("Would you like to blast a specific sequence against the consensus sequence (you will need the NCBI id) y/n: ")
+    if wanna_blast == 'y':
+            NCBI_ID = input("Please enter NCBI sequence ID: ")
+            bash_command = f'curl -s "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=protein&id={NCBI_ID}&rettype=fasta" > {NCBI_ID}.fasta'
+            get_specific_seq = subprocess.run(bash_command, shell = True)
+            blast_away = subprocess.run(f'blastp -query consensus.fasta -subject {NCBI_ID}.fasta -out blastp_results.txt', shell = True)
+            print("Blast successful, results can be found in blastp_results.txt")
+    else:
+        print("Blast avoided")
 except Exception as e:
     print("Error:", e)
