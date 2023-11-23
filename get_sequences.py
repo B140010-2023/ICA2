@@ -96,7 +96,7 @@ try:
 except Exception as e:
     print("Error:", e)
 
-#this is another option to do EMBOSS prettyplot just incase the user wants to
+#this is another option to do EMBOSS prettyplot just incase the user wants to where files are directed to a new directory
 try:
     prettypretty = input("Would you like to make a pretty plot of the results? y/n :")
     if prettypretty == 'y':
@@ -108,23 +108,17 @@ try:
 except Exception as e:
     print("Error:", e)
 
-#!/usr/bin/env python3
-import subprocess
-import pandas as pd
-import re
-import csv
-
 print("Starting patmatmotif...")
 
-#I realise that I needed to create a dataframe using pandas to initiate the patmatmotif programme, to make a dataframe I needed
+#I realised that I needed to create a dataframe using pandas to initiate the patmatmotif programme, to make a dataframe I needed
 #to create a separate fasta format file for each individual sequence within the dataset, I then added a part at the end to add
 #all of the results to one large file and delete all the intermediary files to keep the directory less messy
 
 s1 = [] #all lines starting with > (the IDs) are added to this
-s2 = [] #all parts starting with M (methionine) are put here which gets all the sequences in this part of the dataframe
+s2 = [] #all sequences are put here which gets all the sequences in this part of the dataframe
 
 try:
-    with open('glucose-6-phosphatase_aves_sequences.fasta', 'r') as file:
+    with open(f'{protein}_{species}_sequences.fasta', 'r') as file:
         current_line = ''
         for line in file:
             line = line.strip()
@@ -158,16 +152,21 @@ print("Patmatmotif successful. Detailed summary of patmatmotif can be found in m
 
 #to extract the various motifs that were present in the dataset I wrote this code using re to extract the part after Motif from
 #the summary file and then put it in a new file called motif_count.txt
-motif_count = {}
-with open('motif_summary.txt', 'r') as file:
-    for line in file:
-        motifs = re.findall(r'Motif = (\w+)', line)
-        for motif in motifs:
-            motif_count[motif] = motif_count.get(motif, 0) + 1
+try:
+    motif_count = {}
+    with open('motif_summary.txt', 'r') as file:
+        for line in file:
+            motifs = re.findall(r'Motif = (\w+)', line)
+            for motif in motifs:
+                motif_count[motif] = motif_count.get(motif, 0) + 1
 
-with open('motif_count.txt', 'w') as outfile:
-    for motif, count in motif_count.items():
-        outfile.write(f"{motif}: {count}\n")
+    with open('motif_count.txt', 'w') as outfile:
+        for motif, count in motif_count.items():
+            outfile.write(f"{motif}: {count}\n")
+except Exception as e:
+    print("Error:", e)
+
+print("Motif's have been succesffully counted")
 
 wanna_see = input("Would you like to see the most common motifs? y/n: ")
 if wanna_see == 'y':
